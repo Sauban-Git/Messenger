@@ -1,7 +1,7 @@
 import { Router, type Request, type Response } from "express";
 import { prisma } from "../../db/prisma.js";
 import argon2 from "argon2"
-
+import jwt from "jsonwebtoken"
 const router = Router();
 
 router.get("/:query", async (req: Request, res: Response) => {
@@ -64,20 +64,38 @@ router.post("/signup", async (req: Request, res: Response) => {
 
 router.post("/signin", async (req: Request, res: Response) => {
   const { phone, password }: { name: string, phone: string, password: string } = req.body
-  const hashPassword = await argon2.hash(password)
 
   try {
     const user = await prisma.user.findUnique({
       where: {
         phone,
-        hashPassword
       }
     })
 
     if (user) {
+      const isPasswordValid = await argon2.verify(user.hashPassword, password);
+      if (!isPasswordValid) {
+        return res.status(400).json({ error: "Phone or password is wrong!" });
+      }
+
+      const secretKey = process.env.JWT_SECRET_KEY || "123456";
+      const token = jwt.sign(
+        { userId: user.id, phone: user.phone },
+        secretKey,
+        { expiresIn: "1h" }
+      );
+
+      const bearerToken = `Bearer ${token}`
+
       return res.status(200).json({
-        user,
+        user: {
+          userId: user.id,
+          name: user.name,
+          phone: user.phone
+        },
+        token: bearerToken
       })
+
     } else {
       console.log("Error after getting user data")
       return res.status(400).json({
