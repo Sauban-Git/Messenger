@@ -1,10 +1,122 @@
 import { Router, type Request, type Response } from "express";
 import { prisma } from "../../db/prisma.js";
+import argon2 from "argon2"
 
 const router = Router();
 
-router.get("/", async (req: Request, res: Response) => {
-  const userId = req.body.id
+router.get("/:query", async (req: Request, res: Response) => {
+  const query = req.params.query as string
+  try {
+    const users = await prisma.user.findMany({
+      where: {
+        OR: [
+          { name: { contains: query, mode: "insensitive" } },
+          { phone: { contains: query } }
+        ]
+      }
+    })
+
+    if (users) {
+      return res.status(200).json({
+        users
+      })
+    } else {
+      console.log("Something went wrong after getting users")
+      return res.status(400).json({
+        error: "Wrong query!"
+      })
+    }
+  } catch (error) {
+    console.log("Error while prisma query: ", error)
+    return res.status(500).json({
+      error: "Something went wrong!"
+    })
+  }
+})
+
+router.post("/signup", async (req: Request, res: Response) => {
+  const { name, phone, password }: { name: string, phone: string, password: string } = req.body
+  const hashPassword = await argon2.hash(password)
+
+  try {
+    const user = await prisma.user.create({
+      data: {
+        name,
+        phone,
+        hashPassword
+      }
+    })
+
+    if (user) {
+      return res.status(200).json({
+        user,
+      })
+    } else {
+      console.log("Error after getting user data")
+    }
+  } catch (error) {
+    console.log("Error while creating user: ", error)
+    return res.status(500).json({
+      error: "Error creating user.. try after sometimes"
+    })
+  }
+})
+
+router.post("/signin", async (req: Request, res: Response) => {
+  const { phone, password }: { name: string, phone: string, password: string } = req.body
+  const hashPassword = await argon2.hash(password)
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
+        phone,
+        hashPassword
+      }
+    })
+
+    if (user) {
+      return res.status(200).json({
+        user,
+      })
+    } else {
+      console.log("Error after getting user data")
+      return res.status(400).json({
+        error: "Phone or password is wrong!"
+      })
+    }
+  } catch (error) {
+    console.log("Error while creating user: ", error)
+    return res.status(500).json({
+      error: "Error creating user.. try after sometimes"
+    })
+  }
+})
+
+router.put("/", async (req: Request, res: Response) => {
+  const { name, phone }: { name: string, phone: string } = req.body
+
+  try {
+    const user = await prisma.user.update({
+      where: {
+        phone
+      },
+      data: {
+        name
+      }
+    })
+    if (user) {
+      return res.status(200).json({
+        user
+      })
+    } else {
+      console.log(("Error while updating name"))
+      return res.status(500).json({
+        error: "Error while updating name...something went wrong at server side"
+      })
+    }
+  } catch (error) {
+    console.log("Error while updating name: ", error)
+  }
 })
 
 export { router as userRouter }

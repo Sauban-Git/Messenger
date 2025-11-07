@@ -19,6 +19,7 @@ model User {
   phone         String         @unique
   messages      Message[]
   conversations Conversation[]
+  hashPassword  String
 }
 
 model Message {
