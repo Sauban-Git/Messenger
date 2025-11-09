@@ -13,6 +13,11 @@ router.get("/:query", async (req: Request, res: Response) => {
           { name: { contains: query, mode: "insensitive" } },
           { phone: { contains: query } }
         ]
+      },
+      select: {
+        name: true,
+        phone: true,
+        id: true,
       }
     })
 
@@ -44,6 +49,11 @@ router.post("/signup", async (req: Request, res: Response) => {
         name,
         phone,
         hashPassword
+      },
+      select: {
+        name: true,
+        phone: true,
+        id: true,
       }
     })
 
@@ -89,7 +99,7 @@ router.post("/signin", async (req: Request, res: Response) => {
 
       return res.status(200).json({
         user: {
-          userId: user.id,
+          id: user.id,
           name: user.name,
           phone: user.phone
         },
@@ -120,6 +130,11 @@ router.put("/", async (req: Request, res: Response) => {
       },
       data: {
         name
+      },
+      select: {
+        name: true,
+        phone: true,
+        id: true,
       }
     })
     if (user) {

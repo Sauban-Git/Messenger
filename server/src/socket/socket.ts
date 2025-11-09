@@ -1,19 +1,38 @@
+import { error } from "console"
 import { Server as HttpServer } from "http"
 import { Server as SocketIOServer } from "socket.io"
+import jwt, { type JwtPayload } from "jsonwebtoken"
 
 type Status = "start" | "stop"
 
-
-let onlineUsers = new Set<string>
 const onlineUsersMap = new Map<string, string>
 const onlineCount = new Map<string, number>
-const userId = "2344" // for now......
 
 
 export const setupSocket = async (server: HttpServer) => {
   const io = new SocketIOServer(server)
 
+  io.use((socket, next) => {
+
+    try {
+      const token = socket.handshake.headers.authorization
+      if (!token) return next(new Error("No token found"))
+
+      const itoken = token.split(" ")[1]
+      if (!itoken) return next(new Error("token is invalid"))
+
+      const decoded = jwt.verify(itoken, process.env.JWT_SECRET_KEY || "123456") as JwtPayload
+      socket.data.userId = decoded.userId
+
+    } catch (error) {
+      console.log("Authorization failed: ", error)
+      next(new Error("Authorization failed"))
+    }
+
+  })
+
   io.on("connection", (socket) => {
+    const userId = socket.data.userId
     console.log("Socket Connected: ", socket.id)
 
     onlineUsersMap.set(socket.id, userId)
@@ -57,7 +76,6 @@ export const setupSocket = async (server: HttpServer) => {
       io.emit("online", Array.from(onlineCount.keys()));
     })
   })
-
 
   return io
 }
