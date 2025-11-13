@@ -18,6 +18,7 @@ router.get("/", async (req: Request, res: Response) => {
       select: {
         id: true,
         name: true,
+        isGroup: true,
         participants: {
           select: {
             id: true,
@@ -70,6 +71,32 @@ router.post("/", async (req: Request, res: Response) => {
             ]
           }
         }
+      },
+      select: {
+        id: true,
+        name: true,
+        isGroup: true,
+        participants: {
+          select: {
+            id: true,
+            name: true,
+            phone: true
+          }
+        },
+        messages: {
+          orderBy: {
+            createdAt: 'desc'
+          },
+          take: 1,
+          select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            recievedAt: true,
+            readAt: true,
+            senderId: true
+          }
+        }
       }
     })
     if (existingconv) {
@@ -88,6 +115,32 @@ router.post("/", async (req: Request, res: Response) => {
             { id: userId },
             { id: participantId }
           ]
+        }
+      },
+      select: {
+        id: true,
+        name: true,
+        isGroup: true,
+        participants: {
+          select: {
+            id: true,
+            name: true,
+            phone: true
+          }
+        },
+        messages: {
+          orderBy: {
+            createdAt: 'desc'
+          },
+          take: 1,
+          select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            recievedAt: true,
+            readAt: true,
+            senderId: true
+          }
         }
       }
     })

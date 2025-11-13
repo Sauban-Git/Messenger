@@ -72,7 +72,7 @@ export const MessagesList = () => {
 
   return (
 
-    <div className="border-l-2 border-gray-600">
+    <div className="border-l-2 border-gray-600 md:h-screen">
       {/* Header */}
       <div className="flex justify-between">
         <div className="flex" onClick={() => setConversationsListDisplay(true)}>
@@ -88,7 +88,7 @@ export const MessagesList = () => {
       </div>
 
       {/* Messages */}
-      <div className="p-5 overflow-y-auto h-[80vh]">
+      <div className="p-5 overflow-y-auto h-[85vh] md:h-[80vh]">
         {messages.map((msg, index) => (
           <Message
             key={index}
@@ -102,7 +102,7 @@ export const MessagesList = () => {
       </div>
 
       {/* Input Message */}
-      <div className=" bg-gray-400 py-2 px-3 flex">
+      <div className="bg-gray-400 py-2 px-3 flex">
         <input className="rounded-xl w-full bg-amber-50 py-3 px-2 text-xl" placeholder="Type here" ref={inputRef} onKeyDown={handleKeyDown} />
         <div className="flex items-center px-2">
           <p className="border rounded-xl p-3 bg-blue-500" onClick={sendMessage}>
