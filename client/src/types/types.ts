@@ -15,12 +15,12 @@ export interface MessageApi {
   readAt?: string
 }
 
-export type MessagesApi = MessageApi[]
+export type MessageListApi = MessageApi[]
 
 export interface ConversationApi {
   id: string
   name?: string
-  messages: MessagesApi
+  messages: MessageApi
   participants: UserInfoApi[]
   isGroup: boolean
 }
