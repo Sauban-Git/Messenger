@@ -1,45 +1,46 @@
-import { useEffect, useRef, useState, type KeyboardEvent } from "react"
+import { useEffect, useRef, type KeyboardEvent } from "react"
 import { useComponentsDisplayStore } from "../store/componentsStore"
-import { Message, type Status } from "./Message"
+import { Message } from "./Message"
 import { formatToLocalTime } from "../utils/localtz"
+import { useMessageListStore } from "../store/messageListStore"
+import { useUserInfoStore } from "../store/userInfoStore"
 
 export const MessagesList = () => {
 
-  interface DemoMessage {
-    sender: boolean
-    content: string
-    time: string
-    status: Status
-  }
+
 
   const inputRef = useRef<HTMLInputElement>(null)
   const messagesEndRef = useRef<HTMLInputElement>(null)
+  const messageList = useMessageListStore((state) => state.messagesList)
+  // const setMessageList = useMessageListStore((state) => state.setMessagesList)
+  const addMessage = useMessageListStore((state) => state.addMessage)
 
-  const demoMessages: DemoMessage[] = [
-    { sender: false, content: "Hey! How’s it going?", time: "10:01 AM", status: "read" },
-    { sender: true, content: "Hey, I’m good! Just finished my project.", time: "10:02 AM", status: "sent" },
-    { sender: false, content: "Nice! What project was it?", time: "10:03 AM", status: "delivered" },
-    { sender: true, content: "A small AI chatbot for my college task 😅", time: "10:04 AM", status: "read" },
-    { sender: false, content: "Oh cool! Using React or something else?", time: "10:05 AM", status: "read" },
-    { sender: true, content: "Yeah, React with a Flask backend.", time: "10:06 AM", status: "read" },
-    { sender: false, content: "Flask? I’ve used that before — easy to set up.", time: "10:07 AM", status: "read" },
-    { sender: true, content: "Exactly! Just wanted something lightweight.", time: "10:08 AM", status: "delivered" },
-    { sender: false, content: "Are you deploying it somewhere?", time: "10:09 AM", status: "delivered" },
-    { sender: true, content: "Not yet. Might try Vercel functions or local testing first.", time: "10:10 AM", status: "sent" },
-    { sender: false, content: "Sounds like a plan 😄", time: "10:11 AM", status: "read" },
-    { sender: true, content: "Yeah, once it’s stable I’ll push it live.", time: "10:12 AM", status: "read" },
-    { sender: false, content: "By the way, did you check that old missionary place nearby?", time: "10:13 AM", status: "read" },
-    { sender: true, content: "Not yet. Want to go this weekend?", time: "10:14 AM", status: "sent" },
-    { sender: false, content: "Sure, let’s plan for Saturday morning.", time: "10:15 AM", status: "read" },
-    { sender: true, content: "Perfect 👍", time: "10:16 AM", status: "delivered" },
-    { sender: false, content: "Cool. I’ll bring my camera too.", time: "10:17 AM", status: "read" },
-    { sender: true, content: "Nice! We’ll get some great shots there.", time: "10:18 AM", status: "read" },
-    { sender: false, content: "Alright, see you then!", time: "10:19 AM", status: "read" },
-    { sender: true, content: "See ya 👋", time: "10:20 AM", status: "read" },
-  ];
+  const userInfo = useUserInfoStore((state) => state.user)
+
+  // const demoMessages: DemoMessage[] = [
+  //   { sender: false, content: "Hey! How’s it going?", time: "10:01 AM", status: "read" },
+  //   { sender: true, content: "Hey, I’m good! Just finished my project.", time: "10:02 AM", status: "sent" },
+  //   { sender: false, content: "Nice! What project was it?", time: "10:03 AM", status: "delivered" },
+  //   { sender: true, content: "A small AI chatbot for my college task 😅", time: "10:04 AM", status: "read" },
+  //   { sender: false, content: "Oh cool! Using React or something else?", time: "10:05 AM", status: "read" },
+  //   { sender: true, content: "Yeah, React with a Flask backend.", time: "10:06 AM", status: "read" },
+  //   { sender: false, content: "Flask? I’ve used that before — easy to set up.", time: "10:07 AM", status: "read" },
+  //   { sender: true, content: "Exactly! Just wanted something lightweight.", time: "10:08 AM", status: "delivered" },
+  //   { sender: false, content: "Are you deploying it somewhere?", time: "10:09 AM", status: "delivered" },
+  //   { sender: true, content: "Not yet. Might try Vercel functions or local testing first.", time: "10:10 AM", status: "sent" },
+  //   { sender: false, content: "Sounds like a plan 😄", time: "10:11 AM", status: "read" },
+  //   { sender: true, content: "Yeah, once it’s stable I’ll push it live.", time: "10:12 AM", status: "read" },
+  //   { sender: false, content: "By the way, did you check that old missionary place nearby?", time: "10:13 AM", status: "read" },
+  //   { sender: true, content: "Not yet. Want to go this weekend?", time: "10:14 AM", status: "sent" },
+  //   { sender: false, content: "Sure, let’s plan for Saturday morning.", time: "10:15 AM", status: "read" },
+  //   { sender: true, content: "Perfect 👍", time: "10:16 AM", status: "delivered" },
+  //   { sender: false, content: "Cool. I’ll bring my camera too.", time: "10:17 AM", status: "read" },
+  //   { sender: true, content: "Nice! We’ll get some great shots there.", time: "10:18 AM", status: "read" },
+  //   { sender: false, content: "Alright, see you then!", time: "10:19 AM", status: "read" },
+  //   { sender: true, content: "See ya 👋", time: "10:20 AM", status: "read" },
+  // ];
 
   const setConversationsListDisplay = useComponentsDisplayStore((state) => state.setConversationListDisplay)
-  const [messages, setMessages] = useState<DemoMessage[]>(demoMessages)
 
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>): void => {
     if (event.key === "Enter") {
@@ -50,25 +51,30 @@ export const MessagesList = () => {
 
   const sendMessage = () => {
     const content = inputRef.current?.value?.trim() || "";
-    if (!content) return; // don't send empty messages
-    setMessages(prev => [
-      ...prev,
+    if (!content) return;
+    addMessage(
       {
-        sender: true,
+        senderId: userInfo?.id || " ",
         content,
-        time: formatToLocalTime(new Date().toISOString()),
-        status: "sent"
+        createdAt: new Date().toISOString(),
+        conversationId: "asdkjfasd",
+
       }
-    ]);
+    );
     if (inputRef.current) {
       inputRef.current.value = "";
     }
   }
 
+  const isSender = (id: string | undefined) => {
+    const a = (userInfo?.id == id) ? true : false
+    return a
+  }
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     inputRef.current?.focus()
-  }, [messages]);
+  }, [messageList]);
 
   return (
 
@@ -89,15 +95,17 @@ export const MessagesList = () => {
 
       {/* Messages */}
       <div className="p-5 overflow-y-auto h-[85vh] md:h-[80vh]">
-        {messages.map((msg, index) => (
-          <Message
-            key={index}
-            sender={msg.sender}
-            status={msg.status}
-            time={msg.time}
-            content={msg.content}
-          />
-        ))}
+        {messageList ? <div>
+          {messageList.length > 0 ? messageList.map((msg, index) => (
+            <Message
+              key={index}
+              sender={isSender(msg.id)}
+              status="sent"
+              time={formatToLocalTime(msg.createdAt)}
+              content={msg.content}
+            />
+          )) : null}
+        </div> : null}
         <div ref={messagesEndRef} />
       </div>
 

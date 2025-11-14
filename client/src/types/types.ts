@@ -5,9 +5,9 @@ export interface UserInfoApi {
 }
 
 export interface MessageApi {
-  id: string
+  id?: string
   createdAt: string
-  updatedAt: string
+  updatedAt?: string
   content: string
   conversationId: string
   senderId: string
@@ -20,7 +20,7 @@ export type MessageListApi = MessageApi[]
 export interface ConversationApi {
   id: string
   name?: string
-  messages: MessageApi
+  messages: MessageListApi
   participants: UserInfoApi[]
   isGroup: boolean
 }

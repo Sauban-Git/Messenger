@@ -6,93 +6,14 @@ import { useUserInfoStore } from "../store/userInfoStore";
 import axios from "../utils/axios.ts";
 import type { ConversationsListApi, UserInfoApi } from "../types/types";
 import { useConversationsListStore } from "../store/conversationListStore.ts";
+import { useSelectConversationStore } from "../store/selectConversationStore.ts";
 
 export const ConversationList = () => {
-  // const conversationList = [
-  //   {
-  //     title: "John Doe",
-  //     lastMessage: "Hey, are we still meeting tomorrow?",
-  //     time: "10:15 AM",
-  //     imageUrl: "/images/profile.svg",
-  //   },
-  //   {
-  //     title: "Alice Johnson",
-  //     lastMessage: "I’ve sent you the updated design mockups.",
-  //     time: "9:48 AM",
-  //     imageUrl: "/images/profile.svg",
-  //   },
-  //   {
-  //     title: "Project Team",
-  //     lastMessage: "Let’s deploy the latest build today.",
-  //     time: "Yesterday",
-  //     imageUrl: "/images/profile.svg",
-  //   },
-  //   {
-  //     title: "Mom",
-  //     lastMessage: "Beta, don’t forget to eat breakfast 😊",
-  //     time: "8:05 AM",
-  //     imageUrl: "/images/profile.svg",
-  //   },
-  //   {
-  //     title: "Ravi Kumar",
-  //     lastMessage: "Bro, that code finally worked!",
-  //     time: "Yesterday",
-  //     imageUrl: "/images/profile.svg",
-  //   },
-  //   {
-  //     title: "Emily",
-  //     lastMessage: "Good night 🌙",
-  //     time: "11:57 PM",
-  //     imageUrl: "/images/profile.svg",
-  //   },
-  //   {
-  //     title: "Work Chat",
-  //     lastMessage: "The meeting link has been updated.",
-  //     time: "Yesterday",
-  //     imageUrl: "/images/profile.svg",
-  //   }, {
-  //     title: "Alice Johnson",
-  //     lastMessage: "I’ve sent you the updated design mockups.",
-  //     time: "9:48 AM",
-  //     imageUrl: "/images/profile.svg",
-  //   },
-  //   {
-  //     title: "Project Team",
-  //     lastMessage: "Let’s deploy the latest build today.",
-  //     time: "Yesterday",
-  //     imageUrl: "/images/profile.svg",
-  //   },
-  //   {
-  //     title: "Mom",
-  //     lastMessage: "Beta, don’t forget to eat breakfast 😊",
-  //     time: "8:05 AM",
-  //     imageUrl: "/images/profile.svg",
-  //   },
-  //   {
-  //     title: "Ravi Kumar",
-  //     lastMessage: "Bro, that code finally worked!",
-  //     time: "Yesterday",
-  //     imageUrl: "/images/profile.svg",
-  //   },
-  //   {
-  //     title: "Emily",
-  //     lastMessage: "Good night 🌙",
-  //     time: "11:57 PM",
-  //     imageUrl: "/images/profile.svg",
-  //   },
-  //   {
-  //     title: "Work Chat",
-  //     lastMessage: "The meeting link has been updated.",
-  //     time: "Yesterday",
-  //     imageUrl: "/images/profile.svg",
-  //   },
-  // ];
-  //
+
   const [users, setUsers] = useState<UserInfoApi[] | null>(null)
 
   const setConversationsList = useConversationsListStore((state) => state.setConversationsList)
   const conversationList = useConversationsListStore((state) => state.conversationsList)
-  // const addConversation = useConversationsListStore((state) => state.addConversation)
 
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const togglePopup = () => setIsPopupOpen((prev) => !prev);
@@ -102,7 +23,7 @@ export const ConversationList = () => {
 
   const filteredConversations = conversationList?.filter(conv =>
     conv.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    conv.messages[0].content.toLowerCase().includes(searchTerm.toLowerCase())
+    conv.messages[0]?.content?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const searchRef = useRef<HTMLInputElement>(null)
@@ -115,6 +36,18 @@ export const ConversationList = () => {
     const res = await axios.get<{ users: UserInfoApi[] }>("/user/")
     setUsers(res.data.users)
 
+  }
+
+  const setSelectConversation = useSelectConversationStore((state) => state.setConversationStore)
+
+  const openMessage = (id: string, name: string | undefined) => {
+    if (name) {
+
+      setSelectConversation({
+        id: id,
+        name: name ?? null
+      })
+    }
   }
 
   useEffect(() => {
@@ -146,11 +79,14 @@ export const ConversationList = () => {
           <div className="text-center text-gray-500 mt-4">Chats</div>
           {filteredConversations.length > 0 ? (
             filteredConversations.map((conv, index) => (
-              <Conversation
-                key={index}
-                title={conv.name || ""}
-                lastMessage={conv.messages[0].content}
-              />
+              <div key={index} onClick={() => openMessage(conv.id, conv.name)}>
+                <Conversation
+                  title={conv.name || ""}
+                  lastMessage={
+                    conv.messages[0]?.content ?? ""
+                  }
+                />
+              </div>
             ))
           ) : (
             null
