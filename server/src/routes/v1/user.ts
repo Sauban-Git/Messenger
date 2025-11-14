@@ -4,8 +4,8 @@ import argon2 from "argon2"
 import jwt from "jsonwebtoken"
 const router = Router();
 
-router.get("/:query", async (req: Request, res: Response) => {
-  const query = req.params.query as string
+router.get("/", async (req: Request, res: Response) => {
+  const query = req.params.query as string || ""
   try {
     const users = await prisma.user.findMany({
       where: {
@@ -58,8 +58,22 @@ router.post("/signup", async (req: Request, res: Response) => {
     })
 
     if (user) {
+      const secretKey = process.env.JWT_SECRET_KEY || "123456";
+      const token = jwt.sign(
+        { userId: user.id, phone: user.phone },
+        secretKey,
+        { expiresIn: "1h" }
+      );
+
+      const bearerToken = `Bearer ${token}`
+
       return res.status(200).json({
-        user,
+        user: {
+          id: user.id,
+          name: user.name,
+          phone: user.phone
+        },
+        token: bearerToken
       })
     } else {
       console.log("Error after getting user data")

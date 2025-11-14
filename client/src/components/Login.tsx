@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useComponentsDisplayStore } from "../store/componentsStore";
 import axios from "../utils/axios.ts"
 import type { UserInfoApi } from "../types/types.ts";
+import { useUserInfoStore } from "../store/userInfoStore.ts";
 
 export const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -10,6 +11,8 @@ export const LoginPage = () => {
     password: "",
   });
 
+
+  const setUserInfo = useUserInfoStore((state) => state.setUserInfo)
   const setConversationListDisplay = useComponentsDisplayStore((state) => state.setConversationListDisplay)
   const setSignupDisplay = useComponentsDisplayStore((state) => state.setSignupDisplay)
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -20,12 +23,16 @@ export const LoginPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const userInfo = await axios.post<{ userInfo: UserInfoApi, token: string }>("/user/signin", {
+    const response = await axios.post<{ user: UserInfoApi, token: string }>("/user/signin", {
       phone: formData.phone,
       password: formData.password
     })
 
-    console.log(userInfo)
+
+    setUserInfo(response.data.user)
+    localStorage.setItem("token", response.data.token)
+
+    console.log("User signed up:", response.data.user);
 
     setConversationListDisplay(true)
   };
@@ -82,7 +89,7 @@ export const LoginPage = () => {
           type="submit"
           className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
         >
-          Sign Up
+          Login
         </button>
         <div className="text-center text-sm flex justify-center mt-4">
 

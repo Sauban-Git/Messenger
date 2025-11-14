@@ -5,6 +5,6 @@ const httpServer = createServer(app);
 
 const io = setupSocket(httpServer)
 
-httpServer.listen(3000, () => {
+httpServer.listen(3000, "0.0.0.0", () => {
   console.log("Server started at 3000");
 });

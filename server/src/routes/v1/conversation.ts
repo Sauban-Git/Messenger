@@ -4,7 +4,7 @@ import { prisma } from "../../db/prisma.js";
 const router = Router();
 
 router.get("/", async (req: Request, res: Response) => {
-  const { userId }: { userId: string } = req.body
+  const userId: string = "cmhww23750000lyjaj2ig6hxq"
 
   try {
     const conversation = await prisma.conversation.findMany({

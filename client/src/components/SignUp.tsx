@@ -1,6 +1,8 @@
-
 import { useState } from "react";
 import { useComponentsDisplayStore } from "../store/componentsStore";
+import type { UserInfoApi } from "../types/types";
+import axios from "../utils/axios.ts"
+import { useUserInfoStore } from "../store/userInfoStore.ts";
 
 export const SignupPage = () => {
   const [formData, setFormData] = useState({
@@ -15,17 +17,28 @@ export const SignupPage = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const setUserInfo = useUserInfoStore((state) => state.setUserInfo)
   const setConversationListDisplay = useComponentsDisplayStore((state) => state.setConversationListDisplay)
   const setLoginDisplay = useComponentsDisplayStore((state) => state.setLoginDisplay)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Example basic validation
+
     if (formData.password !== formData.confirmPassword) {
       alert("Passwords do not match!");
       return;
     }
-    console.log("User signed up:", formData);
+
+    const response = await axios.post<{ user: UserInfoApi, token: string }>("/user/signup", {
+      phone: formData.phone,
+      password: formData.password,
+      name: formData.name,
+    })
+
+    setUserInfo(response.data.user)
+    localStorage.setItem("token", response.data.token)
+
+    console.log("User signed up:", response.data.user);
     setConversationListDisplay(true)
   };
 
