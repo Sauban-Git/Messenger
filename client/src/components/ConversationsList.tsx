@@ -4,7 +4,7 @@ import { Conversation } from "./Conversation";
 import { Options } from "./Options";
 import { useUserInfoStore } from "../store/userInfoStore";
 import axios from "../utils/axios.ts";
-import type { ConversationsListApi, UserInfoApi } from "../types/types";
+import type { ConversationApi, ConversationsListApi, UserInfoApi } from "../types/types";
 import { useConversationsListStore } from "../store/conversationListStore.ts";
 import { useSelectConversationStore } from "../store/selectConversationStore.ts";
 
@@ -41,12 +41,29 @@ export const ConversationList = () => {
   const setSelectConversation = useSelectConversationStore((state) => state.setConversationStore)
 
   const openMessage = (id: string, name: string | undefined) => {
-    if (name) {
+    setSelectConversation({
+      id: id,
+      name: name ?? null
+    })
+  }
 
-      setSelectConversation({
-        id: id,
-        name: name ?? null
+  const newConversation = async (id: string) => {
+    try {
+      const res = await axios.post<{ conversation: ConversationApi }>("/conversation", {
+        userId: userInfo?.id,
+        participantId: id,
+        isGroup: false
       })
+
+      if (res.data.conversation) {
+        setSelectConversation({
+          name: res.data.conversation.name ?? null,
+          id: res.data.conversation.id
+        })
+      }
+
+    } catch (error) {
+      console.log("Error while doing something: ", error)
     }
   }
 
@@ -75,7 +92,6 @@ export const ConversationList = () => {
       {/* Conversation List */}
       <div className="px-2 overflow-y-auto h-[80vh] md:h-[78vh]">
         {filteredConversations ? <div>
-
           <div className="text-center text-gray-500 mt-4">Chats</div>
           {filteredConversations.length > 0 ? (
             filteredConversations.map((conv, index) => (
@@ -83,7 +99,7 @@ export const ConversationList = () => {
                 <Conversation
                   title={conv.name || ""}
                   lastMessage={
-                    conv.messages[0]?.content ?? ""
+                    conv.messages[0]?.content ?? "Click to start conversation"
                   }
                 />
               </div>
@@ -93,16 +109,16 @@ export const ConversationList = () => {
           )}
         </div> : null}
         {users ? <div>
-
           <div className="text-center text-gray-500 mt-4">Contacts</div>
           {users.length > 0 ? (
-
             users.map((conv, index) => (
-              <Conversation
-                key={index}
-                title={conv.name || ""}
-                lastMessage="Click to start Conversation"
-              />
+              <div onClick={() => newConversation(conv.id)}>
+                <Conversation
+                  key={index}
+                  title={conv.name || ""}
+                  lastMessage="Click to start conversation"
+                />
+              </div>
             ))
           ) : (
             <div className="text-center text-gray-500 mt-4">No results found</div>
