@@ -2,8 +2,11 @@ import { Router, type Request, type Response } from "express";
 import { prisma } from "../../db/prisma.js";
 
 const router = Router();
-router.get("/", async (req: Request, res: Response) => {
-  const { conversationId }: { conversationId: string } = req.body
+router.get("/:conversationId", async (req: Request, res: Response) => {
+  const conversationId = req.params.conversationId
+  if (!conversationId) return res.status(400).json({
+    error: "Not allowed"
+  })
 
   try {
     const messages = await prisma.message.findMany({
