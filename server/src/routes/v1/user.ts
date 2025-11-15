@@ -2,6 +2,7 @@ import { Router, type Request, type Response } from "express";
 import { prisma } from "../../db/prisma.js";
 import argon2 from "argon2"
 import jwt from "jsonwebtoken"
+import { authmiddleware } from "../../middleware/user.js";
 const router = Router();
 
 router.get("/", async (req: Request, res: Response) => {
@@ -40,10 +41,16 @@ router.get("/", async (req: Request, res: Response) => {
 })
 
 router.post("/signup", async (req: Request, res: Response) => {
+  console.log("hit signup")
   const { name, phone, password }: { name: string, phone: string, password: string } = req.body
   const hashPassword = await argon2.hash(password)
 
   try {
+
+    const existingUser = await prisma.user.findUnique({ where: { phone } });
+    if (existingUser) {
+      return res.status(400).json({ error: "Phone already registered" });
+    }
     const user = await prisma.user.create({
       data: {
         name,
@@ -62,7 +69,7 @@ router.post("/signup", async (req: Request, res: Response) => {
       const token = jwt.sign(
         { userId: user.id, phone: user.phone },
         secretKey,
-        { expiresIn: "1h" }
+        { expiresIn: "7d" }
       );
 
       const bearerToken = `Bearer ${token}`
@@ -87,6 +94,8 @@ router.post("/signup", async (req: Request, res: Response) => {
 })
 
 router.post("/signin", async (req: Request, res: Response) => {
+
+  console.log("hit signin")
   const { phone, password }: { phone: string, password: string } = req.body
 
   try {
@@ -106,7 +115,7 @@ router.post("/signin", async (req: Request, res: Response) => {
       const token = jwt.sign(
         { userId: user.id, phone: user.phone },
         secretKey,
-        { expiresIn: "1h" }
+        { expiresIn: "7d" }
       );
 
       const bearerToken = `Bearer ${token}`
@@ -134,13 +143,17 @@ router.post("/signin", async (req: Request, res: Response) => {
   }
 })
 
-router.put("/", async (req: Request, res: Response) => {
-  const { name, phone }: { name: string, phone: string } = req.body
+router.put("/", authmiddleware, async (req: Request, res: Response) => {
+  const userId = (req as any).userId
+  if (!userId) return res.status(400).json({
+    error: "Not authorized"
+  })
+  const { name }: { name: string } = req.body
 
   try {
     const user = await prisma.user.update({
       where: {
-        phone
+        id: userId
       },
       data: {
         name
@@ -163,6 +176,9 @@ router.put("/", async (req: Request, res: Response) => {
     }
   } catch (error) {
     console.log("Error while updating name: ", error)
+    return res.status(400).json({
+      error: "Wrong credentials"
+    })
   }
 })
 

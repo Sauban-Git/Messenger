@@ -18,6 +18,7 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
     const decoded = jwt.verify(itoken, key) as JwtPayload
 
     (req as any).userId = decoded.userId
+    next()
 
   } catch (error) {
     console.log("User not verified: ", error)

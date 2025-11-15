@@ -1,7 +1,11 @@
 import { Router, type Request, type Response } from "express";
 import { prisma } from "../../db/prisma.js";
+import { authmiddleware } from "../../middleware/user.js";
 
 const router = Router();
+
+router.use(authmiddleware)
+
 router.get("/:conversationId", async (req: Request, res: Response) => {
   const conversationId = req.params.conversationId
   if (!conversationId) return res.status(400).json({
@@ -27,7 +31,9 @@ router.get("/:conversationId", async (req: Request, res: Response) => {
 })
 
 router.post("/", async (req: Request, res: Response) => {
-  const { conversationId, content, senderId }: { conversationId: string, content: string, senderId: string } = req.body
+  const { conversationId, content }: { conversationId: string, content: string, senderId: string } = req.body
+  const senderId = (req as any).userId
+  console.log("Message: ", content)
 
   try {
     const message = await prisma.message.create({
