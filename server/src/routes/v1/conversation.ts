@@ -76,11 +76,11 @@ router.post("/", async (req: Request, res: Response) => {
         where: {
           isGroup: false,
           participants: {
-            every: {
-              OR: [
-                { id: userId },
-                { id: participantId }
-              ]
+            some: { id: userId }
+          },
+          AND: {
+            participants: {
+              some: { id: participantId }
             }
           }
         },
