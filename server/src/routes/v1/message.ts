@@ -1,10 +1,10 @@
 import { Router, type Request, type Response } from "express";
 import { prisma } from "../../db/prisma.js";
-import { authmiddleware } from "../../middleware/user.js";
+import { authMiddleware } from "../../middleware/auth.js";
 
 const router = Router();
 
-router.use(authmiddleware)
+router.use(authMiddleware)
 
 router.get("/:conversationId", async (req: Request, res: Response) => {
   const conversationId = req.params.conversationId
@@ -31,7 +31,7 @@ router.get("/:conversationId", async (req: Request, res: Response) => {
 })
 
 router.post("/", async (req: Request, res: Response) => {
-  const { conversationId, content }: { conversationId: string, content: string, senderId: string } = req.body
+  const { conversationId, content }: { conversationId: string, content: string } = req.body
   const senderId = (req as any).userId
   console.log("Message: ", content)
 

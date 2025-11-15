@@ -1,10 +1,10 @@
 import { Router, type Request, type Response } from "express";
 import { prisma } from "../../db/prisma.js";
-import { authmiddleware } from "../../middleware/user.js";
+import { authMiddleware } from "../../middleware/auth.js";
 
 const router = Router();
 
-router.use(authmiddleware)
+router.use(authMiddleware)
 
 router.get("/", async (req: Request, res: Response) => {
   const userId = (req as any).userId
@@ -63,7 +63,8 @@ router.get("/", async (req: Request, res: Response) => {
 })
 
 router.post("/", async (req: Request, res: Response) => {
-  const { participantId, isGroup }: { userId: string, participantId: string, isGroup: boolean } = req.body
+  console.log("New conversation being created..")
+  const { participantId, isGroup }: { participantId: string, isGroup: boolean } = req.body
   const userId = (req as any).userId
   if (!userId) return res.status(400).json({
     error: "User not verified"
@@ -72,17 +73,14 @@ router.post("/", async (req: Request, res: Response) => {
   let name = null
   try {
     if (!isGroup) {
+      console.log("Reached prisma query")
       const existingconv = await prisma.conversation.findFirst({
         where: {
           isGroup: false,
-          participants: {
-            some: { id: userId }
-          },
-          AND: {
-            participants: {
-              some: { id: participantId }
-            }
-          }
+          AND: [
+            { participants: { some: { id: userId } } },
+            { participants: { some: { id: participantId } } }
+          ]
         },
         select: {
           id: true,
@@ -111,7 +109,11 @@ router.post("/", async (req: Request, res: Response) => {
           }
         }
       })
+
+      console.log("Reached prisma query")
       if (existingconv) {
+
+        console.log("old conversation being sent..")
         return res.status(404).json({
           existingconv
         })
@@ -155,6 +157,8 @@ router.post("/", async (req: Request, res: Response) => {
           }
         })
         if (conversation) {
+
+          console.log("New conversation being sent..")
           return res.status(200).json({
             conversation
           })

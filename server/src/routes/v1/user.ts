@@ -2,7 +2,7 @@ import { Router, type Request, type Response } from "express";
 import { prisma } from "../../db/prisma.js";
 import argon2 from "argon2"
 import jwt from "jsonwebtoken"
-import { authmiddleware } from "../../middleware/user.js";
+import { authMiddleware } from "../../middleware/auth.js";
 const router = Router();
 
 router.get("/", async (req: Request, res: Response) => {
@@ -143,7 +143,7 @@ router.post("/signin", async (req: Request, res: Response) => {
   }
 })
 
-router.put("/", authmiddleware, async (req: Request, res: Response) => {
+router.put("/", authMiddleware, async (req: Request, res: Response) => {
   const userId = (req as any).userId
   if (!userId) return res.status(400).json({
     error: "Not authorized"
