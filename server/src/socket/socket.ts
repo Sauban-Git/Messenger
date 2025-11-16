@@ -1,4 +1,3 @@
-import { error } from "console"
 import { Server as HttpServer } from "http"
 import { Server as SocketIOServer } from "socket.io"
 import jwt, { type JwtPayload } from "jsonwebtoken"
