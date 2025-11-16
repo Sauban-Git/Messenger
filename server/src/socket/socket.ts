@@ -2,6 +2,7 @@ import { error } from "console"
 import { Server as HttpServer } from "http"
 import { Server as SocketIOServer } from "socket.io"
 import jwt, { type JwtPayload } from "jsonwebtoken"
+import { prisma } from "../db/prisma.js"
 
 type Status = "start" | "stop"
 
@@ -45,9 +46,17 @@ export const setupSocket = async (server: HttpServer) => {
 
     io.emit("NewUser", { id: socket.id })
 
-    socket.on("message:new", ({ message, conversationId }: { message: string, conversationId: string }) => {
+    socket.on("message:new", async ({ message, conversationId }: { message: string, conversationId: string }) => {
       console.log(message)
-      io.to(conversationId).emit("message:new", { id: socket.id, message })
+      const msg = await prisma.message.create({
+        data: {
+          content: message,
+          conversationId: conversationId,
+          createdAt: new Date(),
+          senderId: userId
+        }
+      })
+      io.to(conversationId).emit("message:new", { id: socket.id, message: msg })
     })
 
     socket.on("conversation:join", ({ conversationId }: { conversationId: string }) => {
@@ -56,7 +65,7 @@ export const setupSocket = async (server: HttpServer) => {
     })
 
     socket.on("typing:status", ({ conversationId, typing }: { conversationId: string, typing: Status }) => {
-      io.to(conversationId).emit("typing:status", { id: socket.id, typing })
+      io.to(conversationId).emit("typing:status", { userId: userId, typing })
     })
 
     socket.on("disconnect", () => {
@@ -73,7 +82,7 @@ export const setupSocket = async (server: HttpServer) => {
         onlineUsersMap.delete(socket.id);
       }
 
-      io.emit("online", Array.from(onlineCount.keys()));
+      io.emit("online", { onlineUser: Array.from(onlineCount.keys()) })
     })
   })
 
