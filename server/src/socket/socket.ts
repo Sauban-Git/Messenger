@@ -10,12 +10,18 @@ const onlineCount = new Map<string, number>
 
 
 export const setupSocket = async (server: HttpServer) => {
-  const io = new SocketIOServer(server)
+  const io = new SocketIOServer(server, {
+    cors: {
+      origin: "*", // allow all origins (use specific origins in production)
+    },
+  })
 
   io.use((socket, next) => {
 
+    console.log("reached io.use")
+
     try {
-      const token = socket.handshake.headers.authorization
+      const token = socket.handshake.auth.token;
       if (!token) return next(new Error("No token found"))
 
       const itoken = token.split(" ")[1]
@@ -24,12 +30,21 @@ export const setupSocket = async (server: HttpServer) => {
       const decoded = jwt.verify(itoken, process.env.JWT_SECRET_KEY || "123456") as JwtPayload
       socket.data.userId = decoded.userId
 
+      console.log("done iouse: ", socket.data.userId)
+      next()
     } catch (error) {
       console.log("Authorization failed: ", error)
       next(new Error("Authorization failed"))
     }
 
   })
+
+  io.engine.on("connect_error", (err) => {
+    console.log("ENGINE.IO ERROR:");
+    console.log("  code:", err.code);
+    console.log("  message:", err.message);
+    console.log("  context:", err.context);
+  });
 
   io.on("connection", (socket) => {
     const userId = socket.data.userId
