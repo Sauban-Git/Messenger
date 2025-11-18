@@ -74,7 +74,10 @@ export const setupSocket = (server: HttpServer) => {
       }
     })
 
-    conversations.forEach((c) => socket.join(c.id))
+    conversations.forEach((c) => {
+      socket.join(c.id)
+      console.log("joined conversation with id: ", c.id)
+    })
 
     socket.on("message:new", async ({ message, conversationId }: { message: string, conversationId: string }) => {
       console.log(message)
@@ -86,7 +89,7 @@ export const setupSocket = (server: HttpServer) => {
           senderId: userId
         }
       })
-      io.to(conversationId).emit("message:new", { id: socket.id, message: msg })
+      io.to(conversationId).emit("message:new", { message: msg, conversationId: conversationId })
     })
 
     socket.on("typing:status", ({ conversationId, typing }: { conversationId: string, typing: Status }) => {
