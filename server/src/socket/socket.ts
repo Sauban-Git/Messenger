@@ -46,11 +46,9 @@ export const setupSocket = (server: HttpServer) => {
     console.log("  context:", err.context);
   });
 
-  io.on("connection", (socket) => {
+  io.on("connection", async (socket) => {
     const userId = socket.data.userId
 
-    // For new conversation created for this participant ....
-    socket.join(userId)
 
     console.log("Socket Connected: ", socket.id)
 
@@ -64,6 +62,20 @@ export const setupSocket = (server: HttpServer) => {
 
     io.emit("NewUser", { id: socket.id })
 
+    // For new conversation created for this participant ....
+    socket.join(userId)
+
+    const conversations = await prisma.conversation.findMany({
+      where: {
+        participants: { some: { id: userId } }
+      },
+      select: {
+        id: true
+      }
+    })
+
+    conversations.forEach((c) => socket.join(c.id))
+
     socket.on("message:new", async ({ message, conversationId }: { message: string, conversationId: string }) => {
       console.log(message)
       const msg = await prisma.message.create({
@@ -75,11 +87,6 @@ export const setupSocket = (server: HttpServer) => {
         }
       })
       io.to(conversationId).emit("message:new", { id: socket.id, message: msg })
-    })
-
-    socket.on("conversation:join", ({ conversationId }: { conversationId: string }) => {
-      socket.join(conversationId)
-      console.log("User: ", socket.id, " joined: ", conversationId)
     })
 
     socket.on("typing:status", ({ conversationId, typing }: { conversationId: string, typing: Status }) => {
