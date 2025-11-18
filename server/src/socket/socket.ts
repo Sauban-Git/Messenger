@@ -9,7 +9,7 @@ const onlineUsersMap = new Map<string, string>
 const onlineCount = new Map<string, number>
 
 
-export const setupSocket = async (server: HttpServer) => {
+export const setupSocket = (server: HttpServer) => {
   const io = new SocketIOServer(server, {
     cors: {
       origin: "*", // allow all origins (use specific origins in production)
@@ -48,6 +48,10 @@ export const setupSocket = async (server: HttpServer) => {
 
   io.on("connection", (socket) => {
     const userId = socket.data.userId
+
+    // For new conversation created for this participant ....
+    socket.join(userId)
+
     console.log("Socket Connected: ", socket.id)
 
     onlineUsersMap.set(socket.id, userId)

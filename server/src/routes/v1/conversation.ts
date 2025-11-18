@@ -1,6 +1,7 @@
 import { Router, type Request, type Response } from "express";
 import { prisma } from "../../db/prisma.js";
 import { authMiddleware } from "../../middleware/auth.js";
+import { io } from "../../server.js";
 
 const router = Router();
 
@@ -114,7 +115,7 @@ router.post("/", async (req: Request, res: Response) => {
       if (existingconv) {
 
         console.log("old conversation being sent..")
-        return res.status(404).json({
+        return res.status(200).json({
           existingconv
         })
       } else {
@@ -156,8 +157,9 @@ router.post("/", async (req: Request, res: Response) => {
             }
           }
         })
+        const reciepent = conversation.participants.find(p => p.id != userId)?.id
         if (conversation) {
-
+          if (reciepent) io.to(reciepent).emit("conversation:new", { conversationId: conversation.id })
           console.log("New conversation being sent..")
           return res.status(200).json({
             conversation
