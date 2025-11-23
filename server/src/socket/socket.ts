@@ -74,11 +74,6 @@ export const setupSocket = (server: HttpServer) => {
       }
     })
 
-    conversations.forEach((c) => {
-      socket.join(c.id)
-      console.log("joined conversation with id: ", c.id)
-    })
-
     const messageDelivered = await prisma.message.updateMany({
       where: {
         conversation: {
@@ -98,6 +93,12 @@ export const setupSocket = (server: HttpServer) => {
       }
     })
 
+    conversations.forEach((c) => {
+      socket.join(c.id)
+      socket.broadcast.to(c.id).emit("message:deliver")
+      console.log("joined conversation with id: ", c.id)
+    })
+
     console.log("messageDelivered and count: ", messageDelivered.count)
 
 
@@ -115,6 +116,7 @@ export const setupSocket = (server: HttpServer) => {
     })
 
     socket.on("message:read", async ({ conversationId }: { conversationId: string }) => {
+      console.log("read messge")
       const status = await prisma.message.updateMany({
         where: {
           conversationId,
@@ -128,6 +130,7 @@ export const setupSocket = (server: HttpServer) => {
         }
       })
       console.log("read message and count: ", status.count)
+      socket.broadcast.to(conversationId).emit("message:read", { conversationId });
 
     })
 
