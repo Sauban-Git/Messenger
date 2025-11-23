@@ -33,6 +33,10 @@ model Message {
   sender         User         @relation(fields: [senderId], references: [id])
   recievedAt     DateTime?
   readAt         DateTime?
+
+  mediaUrl  String?
+  mediaType String?
+  mediaSize String?
 }
 
 model Conversation {
