@@ -1,3 +1,4 @@
+
 import { Router, type Request, type Response } from "express";
 import { prisma } from "../../db/prisma.js";
 import { authMiddleware } from "../../middleware/auth.js";
@@ -16,6 +17,9 @@ router.get("/:conversationId", async (req: Request, res: Response) => {
     const messages = await prisma.message.findMany({
       where: {
         conversationId
+      },
+      orderBy: {
+        createdAt: "asc"
       }
     })
     if (messages) {
@@ -24,6 +28,9 @@ router.get("/:conversationId", async (req: Request, res: Response) => {
       })
     } else {
       console.log("Error while getting messages")
+      return res.status(203).json({
+        error: "Some unknown error"
+      })
     }
   } catch (error) {
     console.log("Error while getting messages: ", error)
@@ -63,22 +70,36 @@ router.post("/", async (req: Request, res: Response) => {
 })
 
 router.put("/deliver", async (req: Request, res: Response) => {
-  const { conversationId }: { conversationId: string } = req.body
+  const userId = (req as any).userId
 
   try {
     const status = await prisma.message.updateMany({
       where: {
-        conversationId,
-        recievedAt: null
+        conversation: {
+          participants: {
+            some: {
+              id: userId
+            }
+          }
+        },
+        recievedAt: null,
+        NOT: {
+          senderId: userId
+        }
       },
       data: {
         recievedAt: new Date()
       }
     })
-    if (status.count) {
+    if (status.count >= 0) {
       console.log(status.count)
       return res.status(200).json({
         count: status.count
+      })
+    } else {
+      console.log("some unknown error")
+      return res.status(201).json({
+        error: "Something happened.."
       })
     }
   } catch (error) {
@@ -88,21 +109,29 @@ router.put("/deliver", async (req: Request, res: Response) => {
 
 router.put("/read", async (req: Request, res: Response) => {
   const { conversationId }: { conversationId: string } = req.body
-
+  const userId = (req as any).userId
   try {
     const status = await prisma.message.updateMany({
       where: {
         conversationId,
-        readAt: null
+        readAt: null,
+        NOT: {
+          senderId: userId
+        }
       },
       data: {
         readAt: new Date()
       }
     })
-    if (status.count) {
+    if (status.count >= 0) {
       console.log(status.count)
       return res.status(200).json({
         count: status.count
+      })
+    } else {
+      console.log("some unknown error")
+      return res.status(201).json({
+        error: "Something happened.."
       })
     }
   } catch (error) {
@@ -111,3 +140,4 @@ router.put("/read", async (req: Request, res: Response) => {
 })
 
 export { router as messageRouter }
+

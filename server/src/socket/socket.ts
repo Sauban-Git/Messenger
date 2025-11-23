@@ -79,6 +79,28 @@ export const setupSocket = (server: HttpServer) => {
       console.log("joined conversation with id: ", c.id)
     })
 
+    const messageDelivered = await prisma.message.updateMany({
+      where: {
+        conversation: {
+          participants: {
+            some: {
+              id: userId
+            }
+          }
+        },
+        recievedAt: null,
+        NOT: {
+          senderId: userId
+        }
+      },
+      data: {
+        recievedAt: new Date()
+      }
+    })
+
+    console.log("messageDelivered and count: ", messageDelivered.count)
+
+
     socket.on("message:new", async ({ message, conversationId }: { message: string, conversationId: string }) => {
       console.log(message)
       const msg = await prisma.message.create({
@@ -90,6 +112,23 @@ export const setupSocket = (server: HttpServer) => {
         }
       })
       io.to(conversationId).emit("message:new", { message: msg, conversationId: conversationId })
+    })
+
+    socket.on("message:read", async ({ conversationId }: { conversationId: string }) => {
+      const status = await prisma.message.updateMany({
+        where: {
+          conversationId,
+          readAt: null,
+          NOT: {
+            senderId: userId
+          }
+        },
+        data: {
+          readAt: new Date()
+        }
+      })
+      console.log("read message and count: ", status.count)
+
     })
 
     socket.on("typing:status", ({ conversationId, typing }: { conversationId: string, typing: Status }) => {
