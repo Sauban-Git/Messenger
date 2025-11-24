@@ -44,12 +44,14 @@ router.post("/signup", async (req: Request, res: Response) => {
   console.log("hit signup")
   const { name, phone, password }: { name: string, phone: string, password: string } = req.body
   const hashPassword = await argon2.hash(password)
+  console.log(name, password, phone)
 
   try {
+    console.log("try block")
 
     const existingUser = await prisma.user.findUnique({ where: { phone } });
     if (existingUser) {
-      return res.status(400).json({ error: "Phone already registered" });
+      return res.status(203).json({ error: "Phone already registered", user: existingUser });
     }
     const user = await prisma.user.create({
       data: {
@@ -63,6 +65,8 @@ router.post("/signup", async (req: Request, res: Response) => {
         id: true,
       }
     })
+
+    console.log("founded: ", user)
 
     if (user) {
       const secretKey = process.env.JWT_SECRET_KEY || "123456";
